@@ -149,7 +149,10 @@ POLICY_DOCUMENT=$(cat <<EOF
         "dynamodb:CreateTable","dynamodb:DeleteTable","dynamodb:DescribeTable",
         "dynamodb:UpdateTable","dynamodb:TagResource","dynamodb:UntagResource",
         "dynamodb:ListTagsOfResource","dynamodb:UpdateContinuousBackups",
-        "dynamodb:DescribeContinuousBackups"
+        "dynamodb:DescribeContinuousBackups",
+        "dynamodb:DescribeTimeToLive",
+        "dynamodb:GetItem","dynamodb:PutItem","dynamodb:UpdateItem","dynamodb:DeleteItem",
+        "dynamodb:Query","dynamodb:Scan"
       ],
       "Resource": "arn:aws:dynamodb:${AWS_REGION}:${ACCOUNT_ID}:table/event-ticketing-*"
     },
