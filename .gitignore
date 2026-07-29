@@ -28,6 +28,37 @@ coverage
 # Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
+# ── Node ──────────────────────────────────────────────────────
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+
+# ── Build artefacts ───────────────────────────────────────────
+backend/dist/
+frontend/dist/
+
+# ── Terraform ─────────────────────────────────────────────────
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan
+tfplan
+terraform/backend-local.hcl
+terraform/bootstrap/bootstrap.tfstate
+terraform/bootstrap/bootstrap.tfstate.backup
+*.zip
+
+# ── OS / editor ───────────────────────────────────────────────
+.DS_Store
+*.swp
+*.swo
+
+# ── Generated secrets file (contains real credentials) ────────
+GITHUB_SECRETS.md
+
 # Bower dependency directory (https://bower.io/)
 bower_components
 

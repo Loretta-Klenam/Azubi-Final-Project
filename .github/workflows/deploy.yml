@@ -1,0 +1,259 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Deploy – Build → Terraform Apply → S3 Sync → CloudFront Invalidation
+#
+# Triggers:
+#   • Push to develop  → deploys to dev   (auto-approve)
+#   • Push to staging  → deploys to staging (auto-approve)
+#   • Push to main     → deploys to prod  (requires manual approval)
+#   • workflow_dispatch → choose any environment manually
+#
+# Required GitHub Secrets (Settings → Secrets and variables → Actions):
+#   AWS_ROLE_ARN          OIDC IAM role ARN (recommended, no long-lived keys)
+#                         OR set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY
+#   AWS_ACCESS_KEY_ID     Static access key (used if AWS_ROLE_ARN is empty)
+#   AWS_SECRET_ACCESS_KEY Static secret key (used if AWS_ROLE_ARN is empty)
+#   TF_STATE_BUCKET       S3 bucket name for Terraform state
+#                         (created by terraform/bootstrap)
+#   TF_LOCK_TABLE         DynamoDB table name for state locking
+#                         (created by terraform/bootstrap)
+#
+# Required GitHub Variables (Settings → Secrets and variables → Variables):
+#   AWS_REGION            AWS region, e.g. us-east-1  (default: us-east-1)
+#
+# Required GitHub Environments (Settings → Environments):
+#   dev       – no protection rules (auto-deploy)
+#   staging   – no protection rules (auto-deploy)
+#   prod      – add "Required reviewers" to gate prod deploys
+# ──────────────────────────────────────────────────────────────────────────────
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options: [dev, staging, prod]
+
+permissions:
+  id-token: write   # OIDC token exchange
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # never cancel an in-progress deployment
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # 0. Resolve which environment to deploy to based on branch / input
+  # ────────────────────────────────────────────────────────────────────────────
+  resolve-env:
+    name: Resolve environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 1. Run tests and bundle the Lambda handler
+  # ────────────────────────────────────────────────────────────────────────────
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    needs: resolve-env
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run all tests
+        run: npm run test
+
+      - name: Bundle Lambda handler
+        run: npm run build --workspace backend
+
+      - name: Upload Lambda artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-dist-${{ needs.resolve-env.outputs.environment }}
+          path: backend/dist/index.js
+          retention-days: 1
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 2. Terraform plan + apply
+  #    Uses GitHub Environments so prod requires manual approval.
+  #    After apply, captures API URL, S3 bucket, and CloudFront dist ID.
+  # ────────────────────────────────────────────────────────────────────────────
+  terraform:
+    name: "Terraform (${{ needs.resolve-env.outputs.environment }})"
+    runs-on: ubuntu-latest
+    needs: [resolve-env, build-and-test]
+    environment: ${{ needs.resolve-env.outputs.environment }}
+    env:
+      TF_ENV: ${{ needs.resolve-env.outputs.environment }}
+      TF_IN_AUTOMATION: "true"
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+    outputs:
+      api_url: ${{ steps.tf-outputs.outputs.api_url }}
+      s3_bucket: ${{ steps.tf-outputs.outputs.s3_bucket }}
+      cf_distribution_id: ${{ steps.tf-outputs.outputs.cf_distribution_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Lambda artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-dist-${{ needs.resolve-env.outputs.environment }}
+          path: backend/dist/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.6"
+
+      - name: Terraform init (remote S3 backend)
+        run: |
+          terraform -chdir=terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=event-ticketing/${{ env.TF_ENV }}/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform fmt check
+        run: terraform -chdir=terraform fmt -check -recursive
+
+      - name: Terraform validate
+        run: terraform -chdir=terraform validate
+
+      - name: Terraform plan
+        run: |
+          terraform -chdir=terraform plan \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            -out=tfplan \
+            -no-color 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Terraform apply
+        run: terraform -chdir=terraform apply -auto-approve tfplan
+
+      - name: Capture Terraform outputs
+        id: tf-outputs
+        run: |
+          echo "api_url=$(terraform -chdir=terraform output -raw api_url)" >> $GITHUB_OUTPUT
+          echo "s3_bucket=$(terraform -chdir=terraform output -raw s3_bucket)" >> $GITHUB_OUTPUT
+          echo "cf_distribution_id=$(terraform -chdir=terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 3. Build the frontend with the real API URL, then upload to S3 + invalidate
+  # ────────────────────────────────────────────────────────────────────────────
+  deploy-frontend:
+    name: "Deploy Frontend (${{ needs.resolve-env.outputs.environment }})"
+    runs-on: ubuntu-latest
+    needs: [resolve-env, terraform]
+    env:
+      TF_ENV: ${{ needs.resolve-env.outputs.environment }}
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build with the real API Gateway URL injected at build time
+      - name: Build frontend
+        env:
+          VITE_API_URL: ${{ needs.terraform.outputs.api_url }}
+        run: npm run build --workspace frontend
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Upload versioned assets with long-term immutable caching
+      - name: Upload static assets (immutable cache)
+        run: |
+          aws s3 sync frontend/dist/assets/ \
+            "s3://${{ needs.terraform.outputs.s3_bucket }}/assets/" \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable"
+
+      # Upload HTML files with no-cache so browsers always get the latest
+      - name: Upload index.html (no-cache)
+        run: |
+          aws s3 cp frontend/dist/index.html \
+            "s3://${{ needs.terraform.outputs.s3_bucket }}/index.html" \
+            --cache-control "no-cache,no-store,must-revalidate"
+
+      # Upload all other files (manifest, robots, etc.)
+      - name: Upload remaining files
+        run: |
+          aws s3 sync frontend/dist/ \
+            "s3://${{ needs.terraform.outputs.s3_bucket }}/" \
+            --delete \
+            --exclude "assets/*" \
+            --exclude "index.html" \
+            --cache-control "no-cache"
+
+      # Invalidate CloudFront so edge caches serve the new index.html
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ needs.terraform.outputs.cf_distribution_id }}" \
+            --paths "/*"
+
+      # Print a deployment summary to the Actions run page
+      - name: Deployment summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
+          ## Deployment complete ✓
+
+          | Resource        | Value |
+          |-----------------|-------|
+          | Environment     | `${{ env.TF_ENV }}` |
+          | API URL         | ${{ needs.terraform.outputs.api_url }} |
+          | S3 Bucket       | ${{ needs.terraform.outputs.s3_bucket }} |
+          | CF Distribution | ${{ needs.terraform.outputs.cf_distribution_id }} |
+          EOF

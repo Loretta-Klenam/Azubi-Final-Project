@@ -1,19 +1,35 @@
-import { z } from 'zod';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { handleEvents } from './handlers/events.js';
+import { handleRegistrations } from './handlers/registrations.js';
+import { handleHealth } from './handlers/health.js';
+import { corsPreflightResponse, errorResponse } from './utils/response.js';
+import { logger } from './utils/logger.js';
 
-export const eventSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  date: z.string(),
-  capacity: z.number().int().positive(),
-  registered: z.number().int().nonnegative().default(0),
-});
+export const handler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
+  logger.info('Request', {
+    method: event.httpMethod,
+    resource: event.resource,
+    path: event.path,
+  });
 
-export type Event = z.infer<typeof eventSchema>;
+  if (event.httpMethod === 'OPTIONS') return corsPreflightResponse();
 
-export function createHealthResponse() {
-  return {
-    status: 'ok',
-    service: 'event-ticketing-api',
-    timestamp: new Date().toISOString(),
-  };
-}
+  const { resource } = event;
+
+  try {
+    if (resource === '/health') return handleHealth(event);
+    if (
+      resource === '/events' ||
+      resource === '/events/{id}'
+    ) {
+      return handleEvents(event);
+    }
+    if (resource === '/events/{id}/registrations') return handleRegistrations(event);
+    return errorResponse(404, 'Route not found');
+  } catch (err) {
+    logger.error('Unhandled error', err);
+    return errorResponse(500, 'Internal server error');
+  }
+};

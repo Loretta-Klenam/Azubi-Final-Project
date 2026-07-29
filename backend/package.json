@@ -3,17 +3,19 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
-    "dev": "tsx src/index.ts"
+    "build": "node scripts/bundle.mjs",
+    "build:types": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
-    "aws-sdk": "^2.799.0",
+    "@aws-sdk/client-dynamodb": "^3.819.0",
+    "@aws-sdk/lib-dynamodb": "^3.819.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
     "@types/node": "^24.0.0",
-    "tsx": "^4.20.0",
+    "esbuild": "^0.25.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   }
