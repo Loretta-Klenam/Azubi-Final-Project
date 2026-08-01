@@ -7,7 +7,7 @@ This repository contains a production-ready starter implementation of a serverle
 - Node.js + TypeScript backend with Zod-based validation and health response logic
 - Terraform modules for DynamoDB, Lambda, and S3
 - OpenAPI specification and Postman collection
-- Documentation for architecture, sequence flow, security, and cost
+- Documentation for architecture, sequence flow, securit
 - GitHub Actions workflow for lint, test, build, and Terraform validation
 
 ## Project structure
