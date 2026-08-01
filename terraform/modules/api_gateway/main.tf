@@ -36,7 +36,7 @@ locals {
 }
 
 resource "aws_api_gateway_rest_api" "this" {
-  name        = "event-ticketing"
+  name        = var.api_name
   description = "Event Registration and Ticketing API"
 
   endpoint_configuration {

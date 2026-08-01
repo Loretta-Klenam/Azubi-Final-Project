@@ -164,6 +164,7 @@ jobs:
         run: |
           terraform -chdir=terraform plan \
             -var="aws_region=${{ env.AWS_REGION }}" \
+            -var="environment=${{ env.TF_ENV }}" \
             -out=tfplan \
             -no-color 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
 

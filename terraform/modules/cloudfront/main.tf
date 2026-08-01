@@ -3,7 +3,7 @@ locals {
 }
 
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = "event-ticketing-oac"
+  name                              = var.origin_access_control_name
   description                       = "OAC for event ticketing frontend"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"

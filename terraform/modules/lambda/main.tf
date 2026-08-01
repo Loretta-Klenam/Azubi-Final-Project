@@ -5,7 +5,7 @@ data "archive_file" "lambda" {
 }
 
 resource "aws_iam_role" "lambda" {
-  name = "event-ticketing-lambda"
+  name = var.iam_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -25,7 +25,7 @@ resource "aws_iam_role_policy_attachment" "logs" {
 }
 
 resource "aws_iam_role_policy" "dynamodb" {
-  name = "event-ticketing-dynamodb"
+  name = var.iam_policy_name
   role = aws_iam_role.lambda.id
 
   policy = jsonencode({

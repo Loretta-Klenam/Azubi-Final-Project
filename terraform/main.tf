@@ -31,16 +31,17 @@ resource "random_id" "bucket" {
 
 locals {
   common_tags = {
-    Project   = "event-ticketing"
-    ManagedBy = "terraform"
+    Project     = "event-ticketing"
+    ManagedBy   = "terraform"
+    Environment = var.environment
   }
 }
 
 module "dynamodb" {
   source = "./modules/dynamodb"
 
-  events_table_name        = "event-ticketing-events"
-  registrations_table_name = "event-ticketing-registrations"
+  events_table_name        = "event-ticketing-events-${var.environment}"
+  registrations_table_name = "event-ticketing-registrations-${var.environment}"
   enable_pitr              = false
   tags                     = local.common_tags
 }
@@ -48,7 +49,9 @@ module "dynamodb" {
 module "lambda" {
   source = "./modules/lambda"
 
-  function_name            = "event-ticketing-api"
+  function_name            = "event-ticketing-api-${var.environment}"
+  iam_role_name            = "event-ticketing-lambda-${var.environment}"
+  iam_policy_name          = "event-ticketing-dynamodb-${var.environment}"
   events_table_name        = module.dynamodb.events_table_name
   events_table_arn         = module.dynamodb.events_table_arn
   registrations_table_name = module.dynamodb.registrations_table_name
@@ -59,6 +62,7 @@ module "lambda" {
 module "api_gateway" {
   source = "./modules/api_gateway"
 
+  api_name             = "event-ticketing-${var.environment}"
   lambda_invoke_arn    = module.lambda.lambda_invoke_arn
   lambda_function_name = module.lambda.lambda_function_name
   tags                 = local.common_tags
@@ -74,6 +78,7 @@ module "s3" {
 module "cloudfront" {
   source = "./modules/cloudfront"
 
+  origin_access_control_name = "event-ticketing-oac-${var.environment}"
   s3_bucket_id              = module.s3.bucket_id
   s3_bucket_arn             = module.s3.bucket_arn
   s3_bucket_regional_domain = module.s3.bucket_regional_domain

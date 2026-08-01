@@ -3,3 +3,9 @@ variable "aws_region" {
   type        = string
   default     = "us-east-1"
 }
+
+variable "environment" {
+  description = "Deployment environment used to namespace shared AWS resources"
+  type        = string
+  default     = "dev"
+}

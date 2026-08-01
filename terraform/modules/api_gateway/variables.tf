@@ -1,3 +1,8 @@
+variable "api_name" {
+  description = "API Gateway REST API name"
+  type        = string
+}
+
 variable "lambda_invoke_arn" {
   description = "Lambda function invoke ARN for API Gateway integration"
   type        = string

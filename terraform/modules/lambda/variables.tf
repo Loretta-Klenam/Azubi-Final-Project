@@ -3,6 +3,16 @@ variable "function_name" {
   type        = string
 }
 
+variable "iam_role_name" {
+  description = "IAM role name for the Lambda function"
+  type        = string
+}
+
+variable "iam_policy_name" {
+  description = "IAM policy name for Lambda DynamoDB access"
+  type        = string
+}
+
 variable "events_table_name" {
   description = "DynamoDB events table name"
   type        = string

@@ -1,3 +1,8 @@
+variable "origin_access_control_name" {
+  description = "CloudFront origin access control name"
+  type        = string
+}
+
 variable "s3_bucket_id" {
   description = "S3 bucket ID for the frontend"
   type        = string
