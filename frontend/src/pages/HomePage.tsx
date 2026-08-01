@@ -18,17 +18,17 @@ export function HomePage() {
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-900/60 p-8 shadow-2xl mb-12"
+        className="mb-12 rounded-2xl border border-violet-100 bg-white p-8 shadow-[0_20px_60px_-30px_rgba(124,58,237,0.45)]"
       >
-        <p className="mb-3 text-sm uppercase tracking-[0.3em] text-cyan-400">
+        <p className="mb-3 text-sm uppercase tracking-[0.3em] text-violet-700">
           Serverless · AWS · Terraform
         </p>
-        <h1 className="text-4xl font-bold leading-tight">
+        <h1 className="text-4xl font-bold leading-tight text-slate-900">
           Register for upcoming events,
           <br />
-          <span className="text-cyan-400">instantly.</span>
+          <span className="text-violet-700">instantly.</span>
         </h1>
-        <p className="mt-4 max-w-2xl text-slate-300">
+        <p className="mt-4 max-w-2xl text-slate-600">
           Browse events, claim your spot, and receive a ticket code — all powered by AWS Lambda,
           DynamoDB, and React.
         </p>

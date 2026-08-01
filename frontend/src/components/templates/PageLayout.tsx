@@ -12,10 +12,10 @@ export function PageLayout({ children }: Props) {
   const clearToast = useUIStore((s) => s.clearToast);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="page-shell min-h-screen text-slate-900">
       <Navbar />
 
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
+      <main className="relative z-10 mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
 
       <AnimatePresence>
         {toast && (
