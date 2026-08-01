@@ -14,10 +14,10 @@ await build({
   platform: 'node',
   target: 'node22',
   format: 'cjs',
-  outfile: resolve(root, 'dist/index.cjs'),
+  outfile: resolve(root, 'dist/index.js'),
   external: ['@aws-sdk/*'],
   sourcemap: false,
   minify: false,
 });
 
-console.log('✓ Lambda handler bundled to dist/index.cjs');
+console.log('Lambda handler bundled to dist/index.js');
