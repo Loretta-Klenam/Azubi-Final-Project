@@ -79,8 +79,8 @@ module "cloudfront" {
   source = "./modules/cloudfront"
 
   origin_access_control_name = "event-ticketing-oac-${var.environment}"
-  s3_bucket_id              = module.s3.bucket_id
-  s3_bucket_arn             = module.s3.bucket_arn
-  s3_bucket_regional_domain = module.s3.bucket_regional_domain
-  tags                      = local.common_tags
+  s3_bucket_id               = module.s3.bucket_id
+  s3_bucket_arn              = module.s3.bucket_arn
+  s3_bucket_regional_domain  = module.s3.bucket_regional_domain
+  tags                       = local.common_tags
 }
