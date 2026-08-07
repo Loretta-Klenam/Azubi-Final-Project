@@ -1,0 +1,4 @@
+aws-lambda-powertools~=3.0
+aws-xray-sdk~=2.14
+pydantic~=2.9
+email-validator~=2.2

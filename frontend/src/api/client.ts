@@ -1,20 +1,53 @@
-export const API_URL = (import.meta.env?.VITE_API_URL as string | undefined) ?? '';
+import type { ApiErrorBody, ApiErrorDetail } from "../types";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-    ...init,
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error((body as { error?: string }).error ?? res.statusText);
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
+export class ApiError extends Error {
+  status: number;
+  errorCode: string;
+  details?: ApiErrorDetail[];
+
+  constructor(status: number, body: Partial<ApiErrorBody>) {
+    super(body.message ?? "Request failed");
+    this.name = "ApiError";
+    this.status = status;
+    this.errorCode = body.errorCode ?? "UNKNOWN_ERROR";
+    this.details = body.details;
   }
-  return res.json() as Promise<T>;
 }
 
-export const apiGet = <T>(path: string) => request<T>(path);
-export const apiPost = <T>(path: string, body: unknown) =>
-  request<T>(path, { method: 'POST', body: JSON.stringify(body) });
-export const apiPut = <T>(path: string, body: unknown) =>
-  request<T>(path, { method: 'PUT', body: JSON.stringify(body) });
-export const apiDelete = <T>(path: string) => request<T>(path, { method: 'DELETE' });
+interface RequestOptions {
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  body?: unknown;
+  token?: string | null;
+  query?: Record<string, string | undefined>;
+}
+
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { method = "GET", body, token, query } = options;
+
+  const url = new URL(API_BASE_URL + path);
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) url.searchParams.set(key, value);
+    }
+  }
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(url.toString(), {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : undefined;
+
+  if (!response.ok) {
+    throw new ApiError(response.status, (data ?? {}) as Partial<ApiErrorBody>);
+  }
+
+  return data as T;
+}

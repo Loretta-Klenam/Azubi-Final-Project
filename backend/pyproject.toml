@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["layers/common"]
+
+[tool.ruff]
+line-length = 110
+# Deployed Lambda runtime is 3.12, but kept at 3.11 here so lint rules (and
+# contributors' local venvs) don't drift onto syntax only 3.12 understands.
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["common"]

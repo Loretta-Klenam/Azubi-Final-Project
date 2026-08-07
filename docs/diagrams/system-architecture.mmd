@@ -1,0 +1,62 @@
+flowchart TB
+    subgraph Client["Clients"]
+        Public["Attendee (browser)"]
+        Admin["Event staff (browser)"]
+    end
+
+    subgraph Edge["Static Hosting"]
+        CF["CloudFront"]
+        S3Site["S3: React SPA"]
+    end
+
+    subgraph Auth["AuthStack"]
+        Cognito["Cognito User Pool<br/>(Admins group)"]
+    end
+
+    subgraph API["ApiStack"]
+        APIGW["API Gateway (REST)<br/>/events, /registrations, /admin/*"]
+        LambdaFns["10 Lambda functions<br/>(Python 3.12, ARM64)"]
+    end
+
+    subgraph Data["DataStack"]
+        EventsTbl[("DynamoDB: events")]
+        RegTbl[("DynamoDB: registrations<br/>+ Stream")]
+    end
+
+    subgraph Storage["StorageStack"]
+        S3Tickets["S3: QR ticket images"]
+    end
+
+    subgraph Notify["NotificationsStack"]
+        SES["SES: attendee email"]
+        SNS["SNS: ops alerts"]
+    end
+
+    subgraph Async["Async notification path"]
+        NotifyFn["notify_on_registration<br/>(Stream-triggered)"]
+        DLQ["SQS DLQ"]
+    end
+
+    subgraph Obs["MonitoringStack"]
+        CW["CloudWatch<br/>Alarms + Dashboard"]
+        Budgets["AWS Budgets"]
+    end
+
+    Public -->|HTTPS| CF --> S3Site
+    Public -->|fetch| APIGW
+    Admin -->|HTTPS| CF
+    Admin -->|Cognito JWT| APIGW
+    Admin -->|SRP login| Cognito
+    APIGW -->|CognitoUserPoolsAuthorizer<br/>on /admin/*| Cognito
+    APIGW --> LambdaFns
+    LambdaFns --> EventsTbl
+    LambdaFns --> RegTbl
+    LambdaFns --> S3Tickets
+    RegTbl -->|DynamoDB Stream<br/>INSERT, type=REGISTRATION| NotifyFn
+    NotifyFn --> SES
+    NotifyFn --> SNS
+    NotifyFn -->|on repeated failure| DLQ
+    SES -->|confirmation email + QR| Public
+    LambdaFns -.->|metrics + logs| CW
+    CW -->|alarm actions| SNS
+    Budgets -->|cost alerts| SNS

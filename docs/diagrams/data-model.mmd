@@ -1,0 +1,31 @@
+erDiagram
+    EVENTS {
+        string eventId PK
+        string title
+        string description
+        string venue
+        string startDateTime
+        string endDateTime
+        number capacity
+        number registeredCount
+        string status "DRAFT | PUBLISHED | CANCELLED"
+        string createdBy
+        string createdAt
+        string updatedAt
+    }
+
+    REGISTRATIONS {
+        string PK "registrationId OR LOCK#eventId#email"
+        string type "REGISTRATION | LOCK"
+        string registrationId
+        string eventId FK
+        string attendeeName
+        string attendeeEmail
+        string confirmationCode
+        string status "CONFIRMED | CANCELLED"
+        string ticketS3Key
+        string registeredAt
+        string cancelledAt
+    }
+
+    EVENTS ||--o{ REGISTRATIONS : "eventId (GSI: EventIndex)"

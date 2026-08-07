@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant A as Attendee
+    participant API as API Gateway
+    participant Reg as register_for_event
+    participant DDB as DynamoDB
+    participant S3 as S3 (tickets)
+    participant Stream as DynamoDB Stream
+    participant Notify as notify_on_registration
+    participant SES as SES
+    participant SNS as SNS (ops)
+
+    A->>API: POST /events/{eventId}/registrations
+    API->>Reg: invoke
+    Reg->>DDB: GetItem events (status, capacity)
+    Reg->>DDB: TransactWriteItems<br/>[Put lock, Put registration, Update registeredCount]
+    alt already registered or sold out
+        DDB-->>Reg: ConditionalCheckFailed
+        Reg-->>API: 409 DUPLICATE_REGISTRATION / EVENT_SOLD_OUT
+        API-->>A: 409 + reason
+    else success
+        DDB-->>Reg: success
+        Reg->>Reg: generate QR PNG
+        Reg->>S3: PutObject ticket QR
+        Reg->>S3: presigned GET URL
+        Reg-->>API: 201 registrationId, confirmationCode, ticketQrUrl
+        API-->>A: 201 (ticket shown immediately)
+        DDB--)Stream: INSERT (type=REGISTRATION)
+        Stream--)Notify: invoke (async, batched)
+        Notify->>DDB: GetItem events (for email content)
+        Notify->>S3: GetObject QR bytes
+        Notify->>SES: SendRawEmail (QR inline, Content-ID)
+        Notify->>SNS: Publish "new registration"
+        SES--)A: confirmation email
+    end

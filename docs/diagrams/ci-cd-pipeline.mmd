@@ -1,0 +1,34 @@
+flowchart LR
+    Dev["Developer"] -->|push feature branch| PR["Pull Request"]
+
+    subgraph CI["CI (on PR, path-filtered)"]
+        direction TB
+        BackendCI["backend-ci.yml<br/>ruff + pytest/moto"]
+        InfraCI["infrastructure-ci.yml<br/>ruff + pytest + cdk synth"]
+        FrontendCI["frontend-ci.yml<br/>eslint + tsc + vite build"]
+    end
+
+    PR --> BackendCI
+    PR --> InfraCI
+    PR --> FrontendCI
+
+    BackendCI --> Merge{"All checks pass?"}
+    InfraCI --> Merge
+    FrontendCI --> Merge
+
+    Merge -->|yes| Main["main branch"]
+    Merge -->|no| Dev
+
+    Main --> Deploy["deploy.yml"]
+
+    subgraph DeployJob["deploy.yml (OIDC, no static AWS keys)"]
+        direction TB
+        AssumeRole["Assume AWS role via GitHub OIDC"]
+        CdkDeploy["cdk deploy --all"]
+        ExtractOutputs["Extract API/Cognito outputs"]
+        BuildFE["Build frontend with real config"]
+        SyncS3["aws s3 sync -> SiteBucket"]
+        Invalidate["CloudFront invalidation"]
+    end
+
+    Deploy --> AssumeRole --> CdkDeploy --> ExtractOutputs --> BuildFE --> SyncS3 --> Invalidate

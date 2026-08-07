@@ -1,38 +1,35 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiGet, apiPost } from './client';
+import { apiRequest } from "./client";
+import type { Paginated, RegistrationSummary, RegistrationWithEvent } from "../types";
 
-export interface Registration {
-  id: string;
-  eventId: string;
-  name: string;
-  email: string;
-  phone?: string;
-  ticketCode: string;
-  status: 'confirmed' | 'cancelled';
-  createdAt: string;
+export function registerForEvent(eventId: string, attendeeName: string, attendeeEmail: string) {
+  return apiRequest<RegistrationSummary>(`/events/${eventId}/registrations`, {
+    method: "POST",
+    body: { attendeeName, attendeeEmail },
+  });
 }
 
-export interface CreateRegistrationInput {
-  name: string;
-  email: string;
-  phone?: string;
+export function getRegistration(registrationId: string, code: string) {
+  return apiRequest<RegistrationWithEvent>(`/registrations/${registrationId}`, {
+    query: { code },
+  });
 }
 
-export const useRegistrations = (eventId: string) =>
-  useQuery({
-    queryKey: ['registrations', eventId],
-    queryFn: () => apiGet<Registration[]>(`/events/${eventId}/registrations`),
+export function cancelRegistration(registrationId: string, code: string) {
+  return apiRequest<{ registrationId: string; status: string }>(`/registrations/${registrationId}`, {
+    method: "DELETE",
+    query: { code },
   });
+}
 
-export const useRegisterForEvent = (eventId: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: CreateRegistrationInput) =>
-      apiPost<Registration>(`/events/${eventId}/registrations`, input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['registrations', eventId] });
-      qc.invalidateQueries({ queryKey: ['events', eventId] });
-      qc.invalidateQueries({ queryKey: ['events'] });
-    },
+export function listRegistrationsForEvent(token: string, eventId: string) {
+  return apiRequest<Paginated<RegistrationSummary>>(`/admin/events/${eventId}/registrations`, {
+    token,
   });
-};
+}
+
+export function adminCancelRegistration(token: string, registrationId: string) {
+  return apiRequest<{ registrationId: string; status: string }>(
+    `/admin/registrations/${registrationId}`,
+    { method: "DELETE", token },
+  );
+}

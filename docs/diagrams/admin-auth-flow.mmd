@@ -1,0 +1,26 @@
+sequenceDiagram
+    participant Ops as Deployer
+    participant CLI as bootstrap-admin.sh
+    participant Cognito as Cognito User Pool
+    participant Admin as Admin (browser)
+    participant SPA as React SPA
+    participant API as API Gateway
+
+    Ops->>CLI: ./scripts/bootstrap-admin.sh <pool-id> <email>
+    CLI->>Cognito: admin-create-user (temp password)
+    CLI->>Cognito: admin-add-user-to-group "Admins"
+    Cognito--)Admin: email with temporary password
+
+    Admin->>SPA: enter email + temp password
+    SPA->>Cognito: SRP auth (amazon-cognito-identity-js)
+    Cognito-->>SPA: NEW_PASSWORD_REQUIRED challenge
+    SPA->>Admin: show "set new password" form
+    Admin->>SPA: new permanent password
+    SPA->>Cognito: completeNewPasswordChallenge
+    Cognito-->>SPA: ID token (JWT, cognito:groups=Admins)
+
+    Admin->>SPA: use admin dashboard
+    SPA->>API: request with Authorization: Bearer <JWT>
+    API->>Cognito: CognitoUserPoolsAuthorizer validates JWT
+    API->>API: Lambda re-checks cognito:groups contains Admins
+    API-->>SPA: 200 (or 403 if not in Admins group)
