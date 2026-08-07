@@ -8,6 +8,8 @@ refuse non-admins).
 """
 from __future__ import annotations
 
+from typing import Optional
+
 from .errors import ForbiddenError
 
 ADMIN_GROUP = "Admins"
@@ -17,7 +19,7 @@ def get_claims(event: dict) -> dict:
     return event.get("requestContext", {}).get("authorizer", {}).get("claims", {}) or {}
 
 
-def get_cognito_sub(event: dict) -> str | None:
+def get_cognito_sub(event: dict) -> Optional[str]:
     return get_claims(event).get("sub")
 
 

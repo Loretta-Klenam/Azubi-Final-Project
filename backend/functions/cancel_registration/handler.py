@@ -10,7 +10,7 @@ Cancelling reverses every effect of registering, in one transaction:
 """
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from common.auth import is_admin_request
 from common.dynamo import events_table, registrations_table, to_dynamo_item, transact_write
@@ -39,7 +39,7 @@ def lambda_handler(event: dict, _context) -> dict:
     if item.get("status") != "CONFIRMED":
         raise ConflictError("This registration is already cancelled.", error_code="ALREADY_CANCELLED")
 
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     lock_key = f"LOCK#{item['eventId']}#{item['attendeeEmail'].lower()}"
     registrations_table_name = registrations_table().table_name
     events_table_name = events_table().table_name

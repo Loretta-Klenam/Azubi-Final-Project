@@ -21,13 +21,13 @@ DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100
 
 
-def _decode_cursor(raw: str | None) -> dict | None:
+def _decode_cursor(raw: "str | None") -> "dict | None":
     if not raw:
         return None
     return json.loads(base64.urlsafe_b64decode(raw.encode()).decode())
 
 
-def _encode_cursor(key: dict | None) -> str | None:
+def _encode_cursor(key: "dict | None") -> "str | None":
     if not key:
         return None
     return base64.urlsafe_b64encode(json.dumps(key).encode()).decode()

@@ -5,7 +5,7 @@ authorizer and again here in code -- see common.auth for why).
 """
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from common.auth import get_cognito_sub, require_admin_group
 from common.dynamo import events_table
@@ -20,7 +20,7 @@ def lambda_handler(event: dict, _context) -> tuple[int, dict]:
     require_admin_group(event)
     payload = parse_json_body(event, EventCreateRequest)
 
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     item = {
         "eventId": generate_id(),
         "title": payload.title,

@@ -8,6 +8,7 @@ bridges that gap so handler code can keep building plain Python dicts.
 from __future__ import annotations
 
 import os
+from typing import Optional
 
 from boto3.dynamodb.types import TypeSerializer
 from botocore.exceptions import ClientError
@@ -37,7 +38,7 @@ def to_dynamo_item(item: dict) -> dict:
     return {key: _serializer.serialize(value) for key, value in item.items()}
 
 
-def transact_write(transact_items: list[dict], failure_map: dict[int, AppError] | None = None) -> None:
+def transact_write(transact_items: list[dict], failure_map: Optional[dict] = None) -> None:
     """Run a TransactWriteItems call, translating a failed condition on a
     specific item (by index) into the caller-supplied AppError, so e.g. a
     failed uniqueness check and a failed capacity check can return distinct,

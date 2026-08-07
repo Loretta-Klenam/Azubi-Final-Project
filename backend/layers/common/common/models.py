@@ -8,18 +8,19 @@ actor from writing arbitrarily large items into DynamoDB.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import StrEnum
+from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
-class EventStatus(StrEnum):
+class EventStatus(str, Enum):
     DRAFT = "DRAFT"
     PUBLISHED = "PUBLISHED"
     CANCELLED = "CANCELLED"
 
 
-class RegistrationStatus(StrEnum):
+class RegistrationStatus(str, Enum):
     CONFIRMED = "CONFIRMED"
     CANCELLED = "CANCELLED"
 
@@ -43,13 +44,13 @@ class EventCreateRequest(BaseModel):
 class EventUpdateRequest(BaseModel):
     """All fields optional: a handler only updates attributes that were sent."""
 
-    title: str | None = Field(default=None, min_length=1, max_length=200)
-    description: str | None = Field(default=None, max_length=2000)
-    venue: str | None = Field(default=None, min_length=1, max_length=200)
-    startDateTime: datetime | None = None
-    endDateTime: datetime | None = None
-    capacity: int | None = Field(default=None, gt=0, le=100_000)
-    status: EventStatus | None = None
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=2000)
+    venue: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    startDateTime: Optional[datetime] = None
+    endDateTime: Optional[datetime] = None
+    capacity: Optional[int] = Field(default=None, gt=0, le=100_000)
+    status: Optional[EventStatus] = None
 
     @model_validator(mode="after")
     def check_dates(self) -> EventUpdateRequest:

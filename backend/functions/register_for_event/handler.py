@@ -21,7 +21,7 @@ slow/unavailable SES doesn't block or fail this request.
 from __future__ import annotations
 
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from aws_lambda_powertools.metrics import MetricUnit
 from qr import generate_qr_png
@@ -71,12 +71,12 @@ def _register(event: dict) -> tuple[int, dict]:
         raise ConflictError("This event is not open for registration.", error_code="EVENT_NOT_PUBLISHED")
 
     start_time = datetime.fromisoformat(target_event["startDateTime"])
-    if datetime.now(UTC) >= start_time:
+    if datetime.now(timezone.utc) >= start_time:
         raise ConflictError("Registration for this event has closed.", error_code="REGISTRATION_CLOSED")
 
     registration_id = generate_id()
     confirmation_code = generate_confirmation_code()
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     ticket_key = f"tickets/{event_id}/{registration_id}.png"
     lock_key = f"LOCK#{event_id}#{email_key}"
 

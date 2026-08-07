@@ -5,7 +5,7 @@ EventUpdateRequest -- every field is Optional). Admin-only.
 """
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from botocore.exceptions import ClientError
 
@@ -35,7 +35,7 @@ def lambda_handler(event: dict, _context) -> tuple[int, dict]:
     if not updates:
         raise ValidationAppError("At least one field must be provided to update.")
 
-    updates["updatedAt"] = datetime.now(UTC).isoformat()
+    updates["updatedAt"] = datetime.now(timezone.utc).isoformat()
 
     update_expression = "SET " + ", ".join(f"#{key} = :{key}" for key in updates)
     expression_attribute_names = {f"#{key}": key for key in updates}
