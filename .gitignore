@@ -28,9 +28,24 @@ coverage
 # Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
+# ── Python ────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+
+# ── CDK ───────────────────────────────────────────────────────
+cdk.out/
+cdk.context.json
+
 # ── Node ──────────────────────────────────────────────────────
 node_modules/
-dist/
 .env
 .env.local
 .env.*.local
