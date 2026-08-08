@@ -55,7 +55,9 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
       }
       const idToken = session.getIdToken();
       setToken(idToken.getJwtToken());
-      setEmail(currentUser.getUsername());
+      // getUsername() resolves to the pool's internal SRP username (a UUID),
+      // not the email, since this pool uses email as a sign-in alias.
+      setEmail((idToken.payload.email as string | undefined) ?? currentUser.getUsername());
       setName((idToken.payload.name as string | undefined) ?? null);
       setIsLoading(false);
     });
@@ -133,7 +135,7 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
         onSuccess: (session) => {
           const idToken = session.getIdToken();
           setToken(idToken.getJwtToken());
-          setEmail(loginEmail);
+          setEmail((idToken.payload.email as string | undefined) ?? loginEmail);
           setName((idToken.payload.name as string | undefined) ?? null);
           resolve();
         },
