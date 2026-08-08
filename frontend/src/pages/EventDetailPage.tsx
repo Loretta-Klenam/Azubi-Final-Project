@@ -28,18 +28,26 @@ export default function EventDetailPage() {
 
   async function handleRegister() {
     if (!eventId || !token) return;
+    // Some attendee accounts have no "name" attribute set in Cognito (it's
+    // optional at sign-up) -- fall back to the email's local part so the
+    // backend's non-empty attendeeName validation never fails on this.
+    const attendeeName = (accountName ?? "").trim() || (accountEmail ?? "").split("@")[0];
+    if (!attendeeName || !accountEmail) {
+      setFormError("We couldn't find your account details. Please sign out and sign in again.");
+      return;
+    }
     setSubmitting(true);
     setFormError(null);
     try {
-      const registration = await registerForEventAsUser(
-        token,
-        eventId,
-        accountName ?? "",
-        accountEmail ?? "",
-      );
+      const registration = await registerForEventAsUser(token, eventId, attendeeName, accountEmail);
       navigate(`/tickets/${registration.registrationId}?code=${registration.confirmationCode}`);
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+      if (err instanceof ApiError) {
+        const detail = err.details?.map((d) => d.message).join(" ");
+        setFormError(detail ? `${err.message} ${detail}` : err.message);
+      } else {
+        setFormError("Something went wrong. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
