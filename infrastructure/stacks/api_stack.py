@@ -167,7 +167,12 @@ class ApiStack(Stack):
         events_table.grant(self.notify_on_registration_fn, "dynamodb:GetItem")
         # register_for_event reads the event (capacity/status check) and
         # updates registeredCount as part of its TransactWriteItems call.
-        events_table.grant(self.register_for_event_fn, "dynamodb:GetItem", "dynamodb:UpdateItem")
+        events_table.grant(
+            self.register_for_event_fn,
+            "dynamodb:GetItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:TransactWriteItems",
+        )
         # cancel_registration's transaction decrements registeredCount.
         events_table.grant(self.cancel_registration_fn, "dynamodb:UpdateItem")
 
@@ -176,7 +181,11 @@ class ApiStack(Stack):
         registrations_table.grant(self.list_registrations_for_user_fn, "dynamodb:Query")
         # register_for_event's transaction Puts both the lock item and the
         # registration item.
-        registrations_table.grant(self.register_for_event_fn, "dynamodb:PutItem")
+        registrations_table.grant(
+            self.register_for_event_fn,
+            "dynamodb:PutItem",
+            "dynamodb:TransactWriteItems",
+        )
         # cancel_registration's transaction updates the registration and
         # deletes its lock item.
         registrations_table.grant(
