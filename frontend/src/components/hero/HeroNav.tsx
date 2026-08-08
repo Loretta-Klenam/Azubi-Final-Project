@@ -7,7 +7,7 @@ export default function HeroNav() {
     <nav className="grid grid-cols-[1fr_auto_1fr] items-center px-6 pt-5 pb-4 md:px-20 md:pt-6">
       {/* Wordmark — col 1 */}
       <span className="font-display text-[32px] md:text-[40px] text-black leading-none select-none">
-        wandor
+        evendor
       </span>
 
       {/* Center nav links — hidden below lg */}

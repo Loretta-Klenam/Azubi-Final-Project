@@ -1,8 +1,8 @@
 const FAQS: { question: string; answer: string }[] = [
   {
-    question: "What is Wandor?",
+    question: "What is Evendor?",
     answer:
-      "Wandor is where you discover events and register for a ticket in a couple of clicks -- no printing, no paperwork.",
+      "Evendor is where you discover events and register for a ticket in a couple of clicks -- no printing, no paperwork.",
   },
   {
     question: "Do I need an account to register for an event?",
@@ -22,7 +22,7 @@ const FAQS: { question: string; answer: string }[] = [
   {
     question: "How is this different from an admin account?",
     answer:
-      "Admin accounts are for event organizers only, created directly by the team running Wandor. They can create, edit, and manage events and see who has registered. Regular user accounts cannot access admin tools.",
+      "Admin accounts are for event organizers only, created directly by the team running Evendor. They can create, edit, and manage events and see who has registered. Regular user accounts cannot access admin tools.",
   },
 ];
 
@@ -56,7 +56,7 @@ export default function FaqPage() {
         ))}
       </section>
 
-      <h1>How to use Wandor</h1>
+      <h1>How to use Evendor</h1>
       <section className="event-list">
         {HOW_TO_USE.map((step) => (
           <div key={step.title} className="event-card">

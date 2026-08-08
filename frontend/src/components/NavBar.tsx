@@ -13,8 +13,8 @@ export default function NavBar() {
 
   return (
     <header className="navbar">
-      <Link to="/" className="brand" aria-label="Wandor home">
-        wandor
+      <Link to="/" className="brand" aria-label="Evendor home">
+        evendor
       </Link>
       <nav>
         <Link to="/events" className="navbar-link">
