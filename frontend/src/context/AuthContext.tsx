@@ -6,10 +6,14 @@ import {
 } from "amazon-cognito-identity-js";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-const userPool = new CognitoUserPool({
-  UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
-  ClientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
-});
+const POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID as string | undefined;
+const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID as string | undefined;
+
+// userPool is null when env vars are not set (local dev without a deployment)
+const userPool =
+  POOL_ID && CLIENT_ID
+    ? new CognitoUserPool({ UserPoolId: POOL_ID, ClientId: CLIENT_ID })
+    : null;
 
 type LoginResult = "success" | "newPasswordRequired";
 
@@ -34,6 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [pendingUser, setPendingUser] = useState<CognitoUser | null>(null);
 
   useEffect(() => {
+    if (!userPool) {
+      setIsLoading(false);
+      return;
+    }
     const currentUser = userPool.getCurrentUser();
     if (!currentUser) {
       setIsLoading(false);
@@ -52,6 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function login(loginEmail: string, password: string): Promise<LoginResult> {
     return new Promise((resolve, reject) => {
+      if (!userPool) {
+        reject(new Error("Cognito is not configured. Set VITE_COGNITO_USER_POOL_ID and VITE_COGNITO_CLIENT_ID."));
+        return;
+      }
       const cognitoUser = new CognitoUser({ Username: loginEmail, Pool: userPool });
       const authDetails = new AuthenticationDetails({ Username: loginEmail, Password: password });
 
@@ -96,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
-    userPool.getCurrentUser()?.signOut();
+    userPool?.getCurrentUser()?.signOut();
     setToken(null);
     setEmail(null);
   }
