@@ -2,7 +2,22 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { listPublicEvents } from "../api/events";
 import { useUserAuth } from "../context/UserAuthContext";
+import { ProductCard } from "@/components/ui/cards-1";
 import type { EventItem } from "../types";
+
+// Fallback stock photos for events that don't have an imageUrl of their own.
+const FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900&auto=format&fit=crop&q=60",
+  "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=900&auto=format&fit=crop&q=60",
+  "https://images.unsplash.com/photo-1511578314322-379afb476865?w=900&auto=format&fit=crop&q=60",
+  "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=900&auto=format&fit=crop&q=60",
+  "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=900&auto=format&fit=crop&q=60",
+  "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=900&auto=format&fit=crop&q=60",
+];
+
+function eventImage(event: EventItem, index: number): string {
+  return event.imageUrl || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+}
 
 export default function EventsListPage() {
   const { isAuthenticated, name, email } = useUserAuth();
@@ -35,26 +50,20 @@ export default function EventsListPage() {
         </p>
       )}
       {events.length === 0 && <p>No published events yet -- check back soon.</p>}
-      <ul className="event-list">
-        {events.map((event) => {
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {events.map((event, index) => {
           const soldOut = event.registeredCount >= event.capacity;
           return (
-            <li key={event.eventId} className="event-card">
-              <Link to={`/events/${event.eventId}`}>
-                <h2>{event.title}</h2>
-              </Link>
-              <p>{event.venue}</p>
-              <p>{new Date(event.startDateTime).toLocaleString()}</p>
-              <p className="muted">
-                {event.registeredCount} / {event.capacity} registered
-              </p>
-              <Link to={`/events/${event.eventId}`} className="button">
-                {soldOut ? "View details" : "View details & register"}
-              </Link>
-            </li>
+            <ProductCard
+              key={event.eventId}
+              title={event.title}
+              category={soldOut ? `${event.venue} -- Sold out` : event.venue}
+              imageUrl={eventImage(event, index)}
+              href={`/events/${event.eventId}`}
+            />
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }

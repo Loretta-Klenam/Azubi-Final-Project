@@ -46,6 +46,8 @@ with open("../frontend/.env.production", "w") as f:
     f.write(f"VITE_API_BASE_URL={api['ApiEndpoint']}\n")
     f.write(f"VITE_COGNITO_USER_POOL_ID={auth['UserPoolId']}\n")
     f.write(f"VITE_COGNITO_CLIENT_ID={auth['UserPoolClientId']}\n")
+    f.write(f"VITE_ATTENDEE_USER_POOL_ID={auth['AttendeeUserPoolId']}\n")
+    f.write(f"VITE_ATTENDEE_CLIENT_ID={auth['AttendeeUserPoolClientId']}\n")
 PY
 
 echo "== Building frontend =="

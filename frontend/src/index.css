@@ -7,17 +7,29 @@
   --color-evendor-text: #1a1a1a;
   --color-evendor-muted: #767676;
   --color-evendor-prompt: #905831;
+
+  /* shadcn/ui tokens -- also used directly by the hand-written CSS below via var(--color-*) */
+  --color-background: #f7f7fb;
+  --color-foreground: #1f1f2e;
+  --color-card: #ffffff;
+  --color-card-foreground: #1f1f2e;
+  --color-primary: #0a0a0a;
+  --color-primary-foreground: #fafafa;
+  --color-secondary: #f0f0f5;
+  --color-secondary-foreground: #0a0a0a;
+  --color-muted: #f0f0f5;
+  --color-muted-foreground: #6b6b80;
+  --color-accent: #f0f0f5;
+  --color-accent-foreground: #0a0a0a;
+  --color-destructive: #b91c1c;
+  --color-destructive-foreground: #fafafa;
+  --color-border: #e2e2ec;
+  --color-input: #e2e2ec;
+  --color-ring: #0a0a0a;
 }
 
 :root {
-  --color-bg: #f7f7fb;
-  --color-surface: #ffffff;
-  --color-border: #e2e2ec;
-  --color-text: #1f1f2e;
-  --color-muted: #6b6b80;
-  --color-primary: #0a0a0a;
   --color-primary-hover: #333333;
-  --color-danger: #b91c1c;
   --radius: 10px;
 }
 
@@ -30,7 +42,7 @@ body {
   font-family: "Geist", sans-serif;
   overflow-x: hidden;
   background: #fff;
-  color: var(--color-text);
+  color: var(--color-foreground);
 }
 
 .navbar {
@@ -97,7 +109,7 @@ body {
 .navbar .muted {
   max-width: 14rem;
   overflow: hidden;
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
   font-size: 0.8rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -169,12 +181,12 @@ h1 {
 }
 
 .muted {
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
   font-size: 0.9rem;
 }
 
 .error {
-  color: var(--color-danger);
+  color: var(--color-destructive);
 }
 
 .event-list {
@@ -234,7 +246,7 @@ h1 {
   border: none;
   border-radius: 0;
   background: transparent;
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
@@ -243,11 +255,11 @@ h1 {
 
 .role-tab:hover {
   background: transparent;
-  color: var(--color-text);
+  color: var(--color-foreground);
 }
 
 .role-tab--active {
-  color: var(--color-text);
+  color: var(--color-foreground);
   border-bottom-color: var(--color-primary);
 }
 

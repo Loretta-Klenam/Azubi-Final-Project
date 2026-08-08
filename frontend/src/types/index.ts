@@ -11,6 +11,7 @@ export interface EventItem {
   capacity: number;
   registeredCount: number;
   status: EventStatus;
+  imageUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }
