@@ -1,13 +1,6 @@
 import { apiRequest } from "./client";
 import type { Paginated, RegistrationSummary, RegistrationWithEvent } from "../types";
 
-export function registerForEvent(eventId: string, attendeeName: string, attendeeEmail: string) {
-  return apiRequest<RegistrationSummary>(`/events/${eventId}/registrations`, {
-    method: "POST",
-    body: { attendeeName, attendeeEmail },
-  });
-}
-
 export function registerForEventAsUser(
   token: string,
   eventId: string,

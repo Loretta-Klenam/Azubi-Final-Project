@@ -45,8 +45,8 @@ export default function EventsListPage() {
         </p>
       ) : (
         <p className="muted">
-          <Link to="/login">Log in</Link> or <Link to="/signup">create an account</Link> to keep all
-          your tickets in one place, or register as a guest below.
+          <Link to="/login">Log in</Link> or <Link to="/signup">create an account</Link> to register
+          for an event.
         </p>
       )}
       {events.length === 0 && <p>No published events yet -- check back soon.</p>}

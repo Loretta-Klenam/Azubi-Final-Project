@@ -1,8 +1,8 @@
-import { type FormEvent, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { getPublicEvent } from "../api/events";
-import { registerForEvent, registerForEventAsUser } from "../api/registrations";
+import { registerForEventAsUser } from "../api/registrations";
 import { useUserAuth } from "../context/UserAuthContext";
 import type { EventItem } from "../types";
 
@@ -15,8 +15,6 @@ export default function EventDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -28,23 +26,17 @@ export default function EventDetailPage() {
       .finally(() => setLoading(false));
   }, [eventId]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      setName(accountName ?? "");
-      setEmail(accountEmail ?? "");
-    }
-  }, [isAuthenticated, accountName, accountEmail]);
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!eventId) return;
+  async function handleRegister() {
+    if (!eventId || !token) return;
     setSubmitting(true);
     setFormError(null);
     try {
-      const registration =
-        isAuthenticated && token
-          ? await registerForEventAsUser(token, eventId, name, email)
-          : await registerForEvent(eventId, name, email);
+      const registration = await registerForEventAsUser(
+        token,
+        eventId,
+        accountName ?? "",
+        accountEmail ?? "",
+      );
       navigate(`/tickets/${registration.registrationId}?code=${registration.confirmationCode}`);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -75,29 +67,26 @@ export default function EventDetailPage() {
 
       {soldOut ? (
         <p className="error">This event is sold out.</p>
-      ) : (
-        <form onSubmit={handleSubmit} className="card-form">
+      ) : isAuthenticated ? (
+        <div className="card-form">
           <h2>Register</h2>
-          {isAuthenticated && <p className="muted">Registering as {accountName ?? accountEmail}.</p>}
-          <label>
-            Name
-            <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={200} />
-          </label>
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              maxLength={320}
-            />
-          </label>
+          <p className="muted">Registering as {accountName ?? accountEmail}.</p>
           {formError && <p className="error">{formError}</p>}
-          <button type="submit" disabled={submitting}>
+          <button type="button" onClick={handleRegister} disabled={submitting}>
             {submitting ? "Registering..." : "Register"}
           </button>
-        </form>
+        </div>
+      ) : (
+        <div className="card-form">
+          <h2>Register</h2>
+          <p className="muted">Sign in to register for this event.</p>
+          <Link to={`/login?redirect=/events/${eventId}`} className="button">
+            Log in to register
+          </Link>
+          <p className="muted">
+            New here? <Link to={`/signup?redirect=/events/${eventId}`}>Create an account</Link>
+          </p>
+        </div>
       )}
     </div>
   );

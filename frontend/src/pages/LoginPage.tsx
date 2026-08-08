@@ -41,13 +41,15 @@ export default function LoginPage() {
 function UserLoginForm() {
   const { login, isAuthenticated, isConfigured } = useUserAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = safeRedirect(searchParams.get("redirect"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (isAuthenticated) return <Navigate to="/events" replace />;
+  if (isAuthenticated) return <Navigate to={redirectTo} replace />;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -55,7 +57,7 @@ function UserLoginForm() {
     setError(null);
     try {
       await login(email, password);
-      navigate("/events");
+      navigate(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign-in failed.");
     } finally {
@@ -84,10 +86,19 @@ function UserLoginForm() {
         {submitting ? "Signing in..." : "Sign in"}
       </button>
       <p className="muted">
-        New here? <Link to="/signup">Create an account</Link>
+        New here?{" "}
+        <Link to={`/signup${redirectTo !== "/events" ? `?redirect=${redirectTo}` : ""}`}>
+          Create an account
+        </Link>
       </p>
     </form>
   );
+}
+
+// Only allow same-site paths so ?redirect= can't be used to send users off-site.
+function safeRedirect(value: string | null): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/events";
+  return value;
 }
 
 function AdminLoginForm() {

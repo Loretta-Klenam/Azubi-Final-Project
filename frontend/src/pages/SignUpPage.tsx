@@ -1,10 +1,18 @@
 import { type FormEvent, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useUserAuth } from "../context/UserAuthContext";
+
+// Only allow same-site paths so ?redirect= can't be used to send users off-site.
+function safeRedirect(value: string | null): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/events";
+  return value;
+}
 
 export default function SignUpPage() {
   const { signUp, confirmSignUp, login, isAuthenticated, isConfigured } = useUserAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = safeRedirect(searchParams.get("redirect"));
 
   const [step, setStep] = useState<"details" | "confirm">("details");
   const [name, setName] = useState("");
@@ -14,7 +22,7 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (isAuthenticated) return <Navigate to="/events" replace />;
+  if (isAuthenticated) return <Navigate to={redirectTo} replace />;
 
   async function handleSignUp(e: FormEvent) {
     e.preventDefault();
@@ -37,7 +45,7 @@ export default function SignUpPage() {
     try {
       await confirmSignUp(email, code);
       await login(email, password);
-      navigate("/events");
+      navigate(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not confirm this account.");
     } finally {
@@ -93,7 +101,8 @@ export default function SignUpPage() {
         </form>
       )}
       <p className="muted">
-        Already have an account? <Link to="/login">Sign in</Link>
+        Already have an account?{" "}
+        <Link to={`/login${redirectTo !== "/events" ? `?redirect=${redirectTo}` : ""}`}>Sign in</Link>
       </p>
     </div>
   );
