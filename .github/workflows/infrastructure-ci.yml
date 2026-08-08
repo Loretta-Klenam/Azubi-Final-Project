@@ -1,0 +1,54 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Infrastructure CI – lint + CDK assertion tests (infrastructure/).
+# Runs on every push and pull request that touches infrastructure/. No AWS
+# credentials needed: the CDK app only reads local config, and the assertion
+# tests synth against an in-memory template. Docker is required because the
+# Lambda Layers are bundled via aws_lambda_python_alpha.PythonLayerVersion,
+# which the GitHub-hosted ubuntu runner provides out of the box.
+# ──────────────────────────────────────────────────────────────────────────────
+name: Infrastructure CI
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "infrastructure/**"
+      - "backend/layers/**"
+      - ".github/workflows/infrastructure-ci.yml"
+  pull_request:
+    paths:
+      - "infrastructure/**"
+      - "backend/layers/**"
+      - ".github/workflows/infrastructure-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infrastructure-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: infrastructure/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest ruff
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Run CDK assertion tests
+        run: pytest -q

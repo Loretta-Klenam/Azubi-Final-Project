@@ -58,7 +58,7 @@ api_stack = ApiStack(
     tags=tags,
 )
 for dependency in (data_stack, auth_stack, storage_stack, notifications_stack, frontend_stack):
-    api_stack.add_stack_dependency(dependency)
+    api_stack.add_dependency(dependency)
 
 monitoring_stack = MonitoringStack(
     app,
@@ -72,7 +72,7 @@ monitoring_stack = MonitoringStack(
     env=env,
     tags=tags,
 )
-monitoring_stack.add_stack_dependency(api_stack)
+monitoring_stack.add_dependency(api_stack)
 
 # cdk-nag (AwsSolutionsChecks) was evaluated for automated security-best-
 # practice linting on every synth, but cdk-nag 3.0.2's published jsii
