@@ -18,7 +18,6 @@ from aws_cdk import CfnOutput, RemovalPolicy, Stack
 from aws_cdk import aws_cloudfront as cloudfront
 from aws_cdk import aws_cloudfront_origins as origins
 from aws_cdk import aws_s3 as s3
-
 from constructs import Construct
 
 

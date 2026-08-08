@@ -17,9 +17,9 @@ from aws_cdk import aws_cloudwatch_actions as cloudwatch_actions
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_sns as sns
+from constructs import Construct
 
 from config import AppConfig
-from constructs import Construct
 
 API_ERROR_RATE_THRESHOLD_PERCENT = 5
 

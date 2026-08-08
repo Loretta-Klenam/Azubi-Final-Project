@@ -8,9 +8,9 @@ from aws_cdk import Stack
 from aws_cdk import aws_ses as ses
 from aws_cdk import aws_sns as sns
 from aws_cdk import aws_sns_subscriptions as subscriptions
+from constructs import Construct
 
 from config import AppConfig
-from constructs import Construct
 
 
 class NotificationsStack(Stack):

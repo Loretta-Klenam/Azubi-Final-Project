@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from aws_cdk import Duration, RemovalPolicy, Stack
 from aws_cdk import aws_s3 as s3
-
 from constructs import Construct
 
 

@@ -32,9 +32,9 @@ from aws_cdk import aws_sns as sns
 from aws_cdk import aws_sqs as sqs
 from aws_cdk.aws_lambda_python_alpha import PythonLayerVersion
 from aws_cdk.aws_ses import EmailIdentity
+from constructs import Construct
 
 from config import AppConfig
-from constructs import Construct
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2] / "backend"
 FUNCTIONS_ROOT = BACKEND_ROOT / "functions"

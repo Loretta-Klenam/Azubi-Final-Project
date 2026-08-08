@@ -18,7 +18,6 @@ from __future__ import annotations
 
 from aws_cdk import RemovalPolicy, Stack
 from aws_cdk import aws_dynamodb as dynamodb
-
 from constructs import Construct
 
 
