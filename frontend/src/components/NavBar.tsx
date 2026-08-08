@@ -6,7 +6,7 @@ export default function NavBar() {
 
   return (
     <header className="navbar">
-      <Link to="/" className="brand">
+      <Link to="/events" className="brand">
         Event Ticketing
       </Link>
       <nav>

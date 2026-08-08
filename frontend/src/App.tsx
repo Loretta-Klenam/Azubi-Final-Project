@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Hero from "@/components/Hero";
 import NavBar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
@@ -14,12 +15,34 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <NavBar />
-        <main className="page">
-          <Routes>
-            <Route path="/" element={<EventsListPage />} />
-            <Route path="/events/:eventId" element={<EventDetailPage />} />
-            <Route path="/tickets/:registrationId" element={<TicketPage />} />
+        <Routes>
+          {/* Landing page — has its own nav inside Hero */}
+          <Route path="/" element={<Hero />} />
+
+          {/* Event pages — use shared NavBar */}
+          <Route
+            path="/events"
+            element={
+              <>
+                <NavBar />
+                <main className="page">
+                  <EventsListPage />
+                </main>
+              </>
+            }
+          />
+          <Route
+            path="/events/:eventId"
+            element={
+              <>
+                <NavBar />
+                <main className="page">
+                  <EventDetailPage />
+                </main>
+              </>
+            }
+          />
+            <Route path="/tickets/:registrationId" element={<><NavBar /><main className="page"><TicketPage /></main></>} />
 
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route
@@ -55,7 +78,6 @@ export default function App() {
               }
             />
           </Routes>
-        </main>
       </BrowserRouter>
     </AuthProvider>
   );
