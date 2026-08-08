@@ -10,7 +10,18 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = ["E501"]
+# E501: line length handled by the formatter/reviewers, not worth failing CI over.
+# UP017: `datetime.UTC` alias needs Python 3.11+; contributors run tests locally
+# against Python 3.9 (see tests/conftest.py), so keep `timezone.utc` instead.
+# UP042: keep `class X(str, Enum)` instead of `enum.StrEnum` — these enums are
+# serialized directly into DynamoDB items/API responses and JSON-encoded, and
+# StrEnum's repr/str semantics differ subtly enough that switching isn't a
+# safe automated lint fix.
+# UP045: pydantic resolves model field annotations at runtime (regardless of
+# `from __future__ import annotations`); `X | None` unions need Python 3.10+
+# to evaluate, but contributors run tests locally against Python 3.9, so
+# `Optional[X]` must stay in layers/common/common/models.py.
+ignore = ["E501", "UP017", "UP042", "UP045"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["common"]

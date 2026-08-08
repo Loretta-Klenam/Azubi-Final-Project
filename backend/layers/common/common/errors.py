@@ -7,7 +7,7 @@ Anything that is *not* one of these is treated as a bug and returns 500.
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class AppError(Exception):
@@ -18,8 +18,8 @@ class AppError(Exception):
         self,
         message: str,
         *,
-        error_code: Optional[str] = None,
-        status_code: Optional[int] = None,
+        error_code: str | None = None,
+        status_code: int | None = None,
         details: Any = None,
     ) -> None:
         super().__init__(message)

@@ -164,10 +164,10 @@ def aws_stack(_lambda_environment):
 
 def api_event(
     *,
-    path_params: "dict | None" = None,
-    query_params: "dict | None" = None,
-    body: "str | None" = None,
-    claims: "dict | None" = None,
+    path_params: dict | None = None,
+    query_params: dict | None = None,
+    body: str | None = None,
+    claims: dict | None = None,
 ) -> dict:
     """Build a minimal API Gateway REST (Lambda proxy) event."""
     event: dict = {

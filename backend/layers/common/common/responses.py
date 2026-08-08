@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import os
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 # Set per-function by CDK to the deployed CloudFront domain. Defaults to "*"
 # for local/unit-test runs. Wildcard is safe here because the API uses
@@ -20,7 +20,7 @@ def _json_default(value: Any) -> Any:
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
-def build_response(status_code: int, body: Any, *, headers: Optional[dict] = None) -> dict:
+def build_response(status_code: int, body: Any, *, headers: dict | None = None) -> dict:
     response_headers = {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
