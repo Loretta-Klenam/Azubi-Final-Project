@@ -52,6 +52,7 @@ def stacks() -> dict:
         events_table=data_stack.events_table,
         registrations_table=data_stack.registrations_table,
         user_pool=auth_stack.user_pool,
+        attendee_user_pool=auth_stack.attendee_user_pool,
         tickets_bucket=storage_stack.tickets_bucket,
         ops_topic=notifications_stack.ops_topic,
         sender_identity=notifications_stack.sender_identity,

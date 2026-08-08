@@ -1,10 +1,8 @@
 import { Upload } from "lucide-react";
 import { useRef } from "react";
-import { useNavigate } from "react-router-dom";
 
 export default function PromptCard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
 
   return (
     <div className="relative w-[701px] max-md:w-[calc(100vw-48px)] min-h-[208px] bg-white/[0.06] border-[3px] border-white rounded-[44px] shadow-[0_0_4px_0_rgba(0,0,0,0.15)] overflow-hidden backdrop-blur-[20px]">
@@ -31,13 +29,6 @@ export default function PromptCard() {
         className="hidden"
       />
 
-      {/* CTA button */}
-      <button
-        onClick={() => navigate("/events")}
-        className="absolute bottom-[21px] right-[21px] w-[156px] h-14 bg-black border-none rounded-[44px] shadow-[0_0_2px_0_rgba(0,0,0,0.05)] cursor-pointer flex items-center justify-center font-sans text-base font-medium text-[#fafafa] uppercase tracking-[0.02em] transition-all hover:bg-[#333] active:scale-95"
-      >
-        Plan My Trip
-      </button>
     </div>
   );
 }

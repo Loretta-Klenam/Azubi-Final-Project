@@ -1,21 +1,28 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Hero from "@/components/Hero";
 import NavBar from "./components/NavBar";
+import PageLayout from "./components/PageLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedUserRoute from "./components/ProtectedUserRoute";
 import { AuthProvider } from "./context/AuthContext";
+import { UserAuthProvider } from "./context/UserAuthContext";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminEventFormPage from "./pages/admin/AdminEventFormPage";
-import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminRegistrationsPage from "./pages/admin/AdminRegistrationsPage";
 import EventDetailPage from "./pages/EventDetailPage";
 import EventsListPage from "./pages/EventsListPage";
+import FaqPage from "./pages/FaqPage";
+import LoginPage from "./pages/LoginPage";
+import MyTicketsPage from "./pages/MyTicketsPage";
+import SignUpPage from "./pages/SignUpPage";
 import TicketPage from "./pages/TicketPage";
 
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+      <UserAuthProvider>
+        <BrowserRouter>
+          <Routes>
           {/* Landing page — has its own nav inside Hero */}
           <Route path="/" element={<Hero />} />
 
@@ -25,9 +32,9 @@ export default function App() {
             element={
               <>
                 <NavBar />
-                <main className="page">
+                <PageLayout scrim="light">
                   <EventsListPage />
-                </main>
+                </PageLayout>
               </>
             }
           />
@@ -36,49 +43,116 @@ export default function App() {
             element={
               <>
                 <NavBar />
-                <main className="page">
+                <PageLayout scrim="light">
                   <EventDetailPage />
-                </main>
+                </PageLayout>
               </>
             }
           />
-            <Route path="/tickets/:registrationId" element={<><NavBar /><main className="page"><TicketPage /></main></>} />
-
-            <Route path="/admin/login" element={<AdminLoginPage />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
+          <Route
+            path="/tickets/:registrationId"
+            element={
+              <>
+                <NavBar />
+                <PageLayout>
+                  <TicketPage />
+                </PageLayout>
+              </>
+            }
+          />
+          <Route
+            path="/faqs"
+            element={
+              <>
+                <NavBar />
+                <PageLayout>
+                  <FaqPage />
+                </PageLayout>
+              </>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <>
+                <NavBar />
+                <PageLayout>
+                  <LoginPage />
+                </PageLayout>
+              </>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <>
+                <NavBar />
+                <PageLayout>
+                  <SignUpPage />
+                </PageLayout>
+              </>
+            }
+          />
+          {/* Kept for old links/bookmarks; the real form now lives at /login */}
+          <Route path="/admin/login" element={<Navigate to="/login?role=admin" replace />} />
+          <Route
+            path="/my-tickets"
+            element={
+              <ProtectedUserRoute>
+                <NavBar />
+                <PageLayout>
+                  <MyTicketsPage />
+                </PageLayout>
+              </ProtectedUserRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <NavBar />
+                <PageLayout>
                   <AdminDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/events/new"
-              element={
-                <ProtectedRoute>
+                </PageLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/events/new"
+            element={
+              <ProtectedRoute>
+                <NavBar />
+                <PageLayout>
                   <AdminEventFormPage mode="create" />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/events/:eventId/edit"
-              element={
-                <ProtectedRoute>
+                </PageLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/events/:eventId/edit"
+            element={
+              <ProtectedRoute>
+                <NavBar />
+                <PageLayout>
                   <AdminEventFormPage mode="edit" />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/events/:eventId/registrations"
-              element={
-                <ProtectedRoute>
+                </PageLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/events/:eventId/registrations"
+            element={
+              <ProtectedRoute>
+                <NavBar />
+                <PageLayout>
                   <AdminRegistrationsPage />
-                </ProtectedRoute>
-              }
-            />
+                </PageLayout>
+              </ProtectedRoute>
+            }
+          />
           </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </UserAuthProvider>
     </AuthProvider>
   );
 }

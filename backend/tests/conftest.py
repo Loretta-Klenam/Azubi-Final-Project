@@ -120,6 +120,7 @@ def aws_stack(_lambda_environment):
                 {"AttributeName": "eventId", "AttributeType": "S"},
                 {"AttributeName": "registeredAt", "AttributeType": "S"},
                 {"AttributeName": "attendeeEmail", "AttributeType": "S"},
+                {"AttributeName": "userId", "AttributeType": "S"},
             ],
             GlobalSecondaryIndexes=[
                 {
@@ -134,6 +135,14 @@ def aws_stack(_lambda_environment):
                     "IndexName": "EmailIndex",
                     "KeySchema": [
                         {"AttributeName": "attendeeEmail", "KeyType": "HASH"},
+                        {"AttributeName": "registeredAt", "KeyType": "RANGE"},
+                    ],
+                    "Projection": {"ProjectionType": "ALL"},
+                },
+                {
+                    "IndexName": "UserIndex",
+                    "KeySchema": [
+                        {"AttributeName": "userId", "KeyType": "HASH"},
                         {"AttributeName": "registeredAt", "KeyType": "RANGE"},
                     ],
                     "Projection": {"ProjectionType": "ALL"},
@@ -175,6 +184,10 @@ def api_event(
 
 def admin_claims(sub: str = "admin-sub-123") -> dict:
     return {"sub": sub, "cognito:groups": "Admins"}
+
+
+def attendee_claims(sub: str = "attendee-sub-123") -> dict:
+    return {"sub": sub}
 
 
 class FakeLambdaContext:

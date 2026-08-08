@@ -53,6 +53,7 @@ class ApiStack(Stack):
         events_table: dynamodb.Table,
         registrations_table: dynamodb.Table,
         user_pool: cognito.UserPool,
+        attendee_user_pool: cognito.UserPool,
         tickets_bucket: s3.Bucket,
         ops_topic: sns.Topic,
         sender_identity: EmailIdentity,
@@ -117,6 +118,9 @@ class ApiStack(Stack):
                 "FRONTEND_BASE_URL": frontend_base_url,
             },
         )
+        self.list_registrations_for_user_fn = self._function(
+            "ListRegistrationsForUserFunction", "list_registrations_for_user"
+        )
 
         notify_dlq = sqs.Queue(
             self,
@@ -145,6 +149,7 @@ class ApiStack(Stack):
             self.get_registration_fn,
             self.cancel_registration_fn,
             self.register_for_event_fn,
+            self.list_registrations_for_user_fn,
             self.notify_on_registration_fn,
         ]
         for fn in self.all_functions:
@@ -168,6 +173,7 @@ class ApiStack(Stack):
 
         registrations_table.grant(self.get_registration_fn, "dynamodb:GetItem")
         registrations_table.grant(self.list_registrations_fn, "dynamodb:Query")
+        registrations_table.grant(self.list_registrations_for_user_fn, "dynamodb:Query")
         # register_for_event's transaction Puts both the lock item and the
         # registration item.
         registrations_table.grant(self.register_for_event_fn, "dynamodb:PutItem")
@@ -242,6 +248,19 @@ class ApiStack(Stack):
             "authorizer": authorizer,
         }
 
+        # Separate authorizer bound to the attendee pool -- entirely
+        # independent of admin_auth above, so a valid attendee JWT can never
+        # satisfy an admin-authorized route and vice versa.
+        attendee_authorizer = apigateway.CognitoUserPoolsAuthorizer(
+            self,
+            "AttendeeAuthorizer",
+            cognito_user_pools=[attendee_user_pool],
+        )
+        attendee_auth = {
+            "authorization_type": apigateway.AuthorizationType.COGNITO,
+            "authorizer": attendee_authorizer,
+        }
+
         events = self.api.root.add_resource("events")
         events.add_method("GET", apigateway.LambdaIntegration(self.list_events_fn))
         event_item = events.add_resource("{eventId}")
@@ -253,6 +272,25 @@ class ApiStack(Stack):
         registration_item = registrations_root.add_resource("{registrationId}")
         registration_item.add_method("GET", apigateway.LambdaIntegration(self.get_registration_fn))
         registration_item.add_method("DELETE", apigateway.LambdaIntegration(self.cancel_registration_fn))
+
+        # Authenticated attendee routes. POST /me/events/{eventId}/registrations
+        # reuses register_for_event_fn -- same handler, same business rules --
+        # the only difference is the attendee authorizer lets the handler read
+        # a `sub` claim (via common.auth.get_cognito_sub) and stamp the new
+        # registration with a userId so it shows up in GET /me/registrations.
+        me = self.api.root.add_resource("me")
+        me_events = me.add_resource("events")
+        me_event_item = me_events.add_resource("{eventId}")
+        me_registrations = me_event_item.add_resource("registrations")
+        me_registrations.add_method(
+            "POST", apigateway.LambdaIntegration(self.register_for_event_fn), **attendee_auth
+        )
+        me_registrations_root = me.add_resource("registrations")
+        me_registrations_root.add_method(
+            "GET",
+            apigateway.LambdaIntegration(self.list_registrations_for_user_fn),
+            **attendee_auth,
+        )
 
         admin = self.api.root.add_resource("admin")
         admin_events = admin.add_resource("events")

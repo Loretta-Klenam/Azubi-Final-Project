@@ -27,6 +27,7 @@ from aws_lambda_powertools.metrics import MetricUnit
 from qr import generate_qr_png
 
 from common import aws_clients
+from common.auth import get_cognito_sub
 from common.dynamo import events_table, registrations_table, to_dynamo_item, transact_write
 from common.errors import ConflictError, NotFoundError, ValidationAppError
 from common.ids import generate_confirmation_code, generate_id
@@ -62,6 +63,10 @@ def _register(event: dict) -> tuple[int, dict]:
 
     payload = parse_json_body(event, RegistrationCreateRequest)
     email_key = payload.attendeeEmail.lower()
+    # Only present when this request came in through the authenticated
+    # POST /me/events/{eventId}/registrations route (attendee Cognito
+    # authorizer) -- absent entirely for the anonymous public route.
+    user_id = get_cognito_sub(event)
 
     target_event = events_table().get_item(Key={"eventId": event_id}).get("Item")
     if not target_event:
@@ -83,6 +88,21 @@ def _register(event: dict) -> tuple[int, dict]:
     registrations_table_name = registrations_table().table_name
     events_table_name = events_table().table_name
 
+    registration_item = {
+        "PK": registration_id,
+        "type": "REGISTRATION",
+        "registrationId": registration_id,
+        "eventId": event_id,
+        "attendeeName": payload.attendeeName,
+        "attendeeEmail": payload.attendeeEmail,
+        "confirmationCode": confirmation_code,
+        "status": "CONFIRMED",
+        "ticketS3Key": ticket_key,
+        "registeredAt": now,
+    }
+    if user_id:
+        registration_item["userId"] = user_id
+
     transact_items = [
         {
             "Put": {
@@ -103,20 +123,7 @@ def _register(event: dict) -> tuple[int, dict]:
         {
             "Put": {
                 "TableName": registrations_table_name,
-                "Item": to_dynamo_item(
-                    {
-                        "PK": registration_id,
-                        "type": "REGISTRATION",
-                        "registrationId": registration_id,
-                        "eventId": event_id,
-                        "attendeeName": payload.attendeeName,
-                        "attendeeEmail": payload.attendeeEmail,
-                        "confirmationCode": confirmation_code,
-                        "status": "CONFIRMED",
-                        "ticketS3Key": ticket_key,
-                        "registeredAt": now,
-                    }
-                ),
+                "Item": to_dynamo_item(registration_item),
                 "ConditionExpression": "attribute_not_exists(PK)",
             }
         },

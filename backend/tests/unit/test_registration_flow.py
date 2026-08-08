@@ -1,11 +1,12 @@
 import json
 
-from conftest import FAKE_CONTEXT, admin_claims, api_event, load_function_module
+from conftest import FAKE_CONTEXT, admin_claims, api_event, attendee_claims, load_function_module
 
 create_event = load_function_module("create_event")
 register_for_event = load_function_module("register_for_event", "handler.py")
 get_registration = load_function_module("get_registration")
 cancel_registration = load_function_module("cancel_registration")
+list_registrations_for_user = load_function_module("list_registrations_for_user")
 
 
 def _create_published_event(capacity: int = 1, **overrides) -> dict:
@@ -24,10 +25,10 @@ def _create_published_event(capacity: int = 1, **overrides) -> dict:
     return json.loads(response["body"])
 
 
-def _register(event_id: str, name: str = "Ama Serwaa", email: str = "ama@example.com"):
+def _register(event_id: str, name: str = "Ama Serwaa", email: str = "ama@example.com", claims: "dict | None" = None):
     body = {"attendeeName": name, "attendeeEmail": email}
     return register_for_event.lambda_handler(
-        api_event(path_params={"eventId": event_id}, body=json.dumps(body)), FAKE_CONTEXT
+        api_event(path_params={"eventId": event_id}, body=json.dumps(body), claims=claims), FAKE_CONTEXT
     )
 
 
@@ -151,3 +152,29 @@ def test_admin_can_cancel_without_code(aws_stack):
         FAKE_CONTEXT,
     )
     assert response["statusCode"] == 200
+
+
+def test_authenticated_registration_appears_in_my_registrations(aws_stack):
+    event_item = _create_published_event(capacity=5)
+    claims = attendee_claims()
+    registration = json.loads(_register(event_item["eventId"], claims=claims)["body"])
+
+    response = list_registrations_for_user.lambda_handler(api_event(claims=claims), FAKE_CONTEXT)
+    assert response["statusCode"] == 200
+    items = json.loads(response["body"])["items"]
+    assert [item["registrationId"] for item in items] == [registration["registrationId"]]
+
+
+def test_anonymous_registration_is_not_linked_to_any_user(aws_stack):
+    event_item = _create_published_event(capacity=5)
+    _register(event_item["eventId"])
+
+    response = list_registrations_for_user.lambda_handler(
+        api_event(claims=attendee_claims()), FAKE_CONTEXT
+    )
+    assert json.loads(response["body"])["items"] == []
+
+
+def test_my_registrations_requires_authentication(aws_stack):
+    response = list_registrations_for_user.lambda_handler(api_event(), FAKE_CONTEXT)
+    assert response["statusCode"] == 403

@@ -1,12 +1,19 @@
-"""Cognito User Pool for admin authentication.
+"""Cognito User Pools for admin and attendee authentication.
 
-Chosen over a shared API key (see docs/adr/0002-cognito-admin-auth.md)
+Admin pool: chosen over a shared API key (see docs/adr/0002-cognito-admin-auth.md)
 because it gives named accounts, revocable per-user, with a real login flow
 -- appropriate for a tool that manages event data, even at small scale.
 
-Self-sign-up is intentionally disabled: administrators are provisioned only
-via `scripts/bootstrap-admin.sh` (documented in docs/deployment.md). There is
-no public "become an admin" path.
+Self-sign-up is intentionally disabled on the admin pool: administrators are
+provisioned only via `scripts/bootstrap-admin.sh` (documented in
+docs/deployment.md). There is no public "become an admin" path.
+
+Attendee pool: a second, entirely separate User Pool for regular users who
+want to sign up, log in, and have their registrations linked to an account
+("My tickets"). It is deliberately its own pool -- not just a group in the
+admin pool -- so that self-service sign-up can never grant admin access:
+an attendee account has no way to end up in the `Admins` group because it
+isn't even in the same user pool.
 """
 from __future__ import annotations
 
@@ -60,8 +67,42 @@ class AuthStack(Stack):
             description="Members can create/edit events and manage registrations.",
         )
 
+        # --- Attendee pool: self-service sign-up, no group/admin concept ---
+        self.attendee_user_pool = cognito.UserPool(
+            self,
+            "AttendeeUserPool",
+            user_pool_name="event-ticketing-attendees",
+            self_sign_up_enabled=True,
+            sign_in_aliases=cognito.SignInAliases(email=True, username=False),
+            standard_attributes=cognito.StandardAttributes(
+                email=cognito.StandardAttribute(required=True, mutable=False),
+                fullname=cognito.StandardAttribute(required=False, mutable=True),
+            ),
+            password_policy=cognito.PasswordPolicy(
+                min_length=12,
+                require_lowercase=True,
+                require_uppercase=True,
+                require_digits=True,
+                require_symbols=True,
+            ),
+            account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
+            removal_policy=RemovalPolicy.RETAIN,
+        )
+
+        self.attendee_user_pool_client = self.attendee_user_pool.add_client(
+            "AttendeeSpaClient",
+            auth_flows=cognito.AuthFlow(user_srp=True),
+            generate_secret=False,
+            access_token_validity=None,
+            prevent_user_existence_errors=True,
+        )
+
         # Consumed by the frontend build step in .github/workflows/deploy.yml
         # to populate VITE_COGNITO_USER_POOL_ID / VITE_COGNITO_CLIENT_ID, and
         # by scripts/bootstrap-admin.sh to create the first admin user.
         CfnOutput(self, "UserPoolId", value=self.user_pool.user_pool_id)
         CfnOutput(self, "UserPoolClientId", value=self.user_pool_client.user_pool_client_id)
+        CfnOutput(self, "AttendeeUserPoolId", value=self.attendee_user_pool.user_pool_id)
+        CfnOutput(
+            self, "AttendeeUserPoolClientId", value=self.attendee_user_pool_client.user_pool_client_id
+        )

@@ -28,7 +28,7 @@ Self-sign-up is disabled. The only way to become an admin is
 `scripts/bootstrap-admin.sh`, which calls `aws cognito-idp admin-create-user` with
 `--desired-delivery-mediums EMAIL` -- Cognito generates a temporary password and emails
 it directly to the new admin, who is forced into a `NEW_PASSWORD_REQUIRED` challenge on
-first sign-in (handled by the SPA's login page, `src/pages/admin/AdminLoginPage.tsx`).
+first sign-in (handled by the SPA's login page, `src/pages/LoginPage.tsx`).
 This was a deliberate choice over a CDK custom resource: a custom resource would need to
 either generate or receive a password and persist *something* about that credential in
 CloudFormation/Lambda state, whereas the script and the CDK stack never see the real

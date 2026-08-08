@@ -15,9 +15,14 @@ def test_public_routes_have_no_authorization(stacks):
     )
 
 
-def test_ten_lambda_functions(stacks):
+def test_two_cognito_authorizers(stacks):
     template = Template.from_stack(stacks["api"])
-    template.resource_count_is("AWS::Lambda::Function", 10)
+    template.resource_count_is("AWS::ApiGateway::Authorizer", 2)
+
+
+def test_eleven_lambda_functions(stacks):
+    template = Template.from_stack(stacks["api"])
+    template.resource_count_is("AWS::Lambda::Function", 11)
 
 
 def test_two_shared_layers(stacks):

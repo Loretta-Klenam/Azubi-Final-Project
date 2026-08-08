@@ -1,25 +1,57 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useUserAuth } from "../context/UserAuthContext";
 
 export default function NavBar() {
-  const { isAuthenticated, email, logout } = useAuth();
+  const { isAuthenticated: isAdmin, email: adminEmail, logout: adminLogout } = useAuth();
+  const {
+    isAuthenticated: isUser,
+    name: userName,
+    email: userEmail,
+    logout: userLogout,
+  } = useUserAuth();
 
   return (
     <header className="navbar">
-      <Link to="/events" className="brand">
-        Event Ticketing
+      <Link to="/" className="brand" aria-label="Wandor home">
+        wandor
       </Link>
       <nav>
-        {isAuthenticated ? (
+        <Link to="/events" className="navbar-link">
+          Discover
+        </Link>
+        <Link to="/faqs" className="navbar-link">
+          FAQs
+        </Link>
+        {isAdmin ? (
           <>
-            <Link to="/admin">Admin</Link>
-            <span className="muted">{email}</span>
-            <button type="button" onClick={logout}>
+            <Link to="/admin" className="navbar-link">
+              Admin
+            </Link>
+            <span className="muted">{adminEmail}</span>
+            <button type="button" className="navbar-action" onClick={adminLogout}>
+              Log out
+            </button>
+          </>
+        ) : isUser ? (
+          <>
+            <Link to="/my-tickets" className="navbar-link">
+              My tickets
+            </Link>
+            <span className="muted">{userName ?? userEmail}</span>
+            <button type="button" className="navbar-action" onClick={userLogout}>
               Log out
             </button>
           </>
         ) : (
-          <Link to="/admin/login">Admin login</Link>
+          <>
+            <Link to="/signup" className="navbar-link">
+              Sign up
+            </Link>
+            <Link to="/login" className="navbar-action">
+              Log in
+            </Link>
+          </>
         )}
       </nav>
     </header>

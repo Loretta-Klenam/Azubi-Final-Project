@@ -1,5 +1,3 @@
-import PromptCard from "./PromptCard";
-
 export default function HeroBody() {
   return (
     <div className="flex flex-col items-center px-6 pt-16 pb-24 text-center">
@@ -10,7 +8,6 @@ export default function HeroBody() {
         Tell our AI where you're going and what you love. We'll create a
         personalized itinerary for you.
       </p>
-      <PromptCard />
     </div>
   );
 }

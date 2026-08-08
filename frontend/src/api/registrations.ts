@@ -8,6 +8,23 @@ export function registerForEvent(eventId: string, attendeeName: string, attendee
   });
 }
 
+export function registerForEventAsUser(
+  token: string,
+  eventId: string,
+  attendeeName: string,
+  attendeeEmail: string,
+) {
+  return apiRequest<RegistrationSummary>(`/me/events/${eventId}/registrations`, {
+    method: "POST",
+    token,
+    body: { attendeeName, attendeeEmail },
+  });
+}
+
+export function listMyRegistrations(token: string) {
+  return apiRequest<Paginated<RegistrationSummary>>("/me/registrations", { token });
+}
+
 export function getRegistration(registrationId: string, code: string) {
   return apiRequest<RegistrationWithEvent>(`/registrations/${registrationId}`, {
     query: { code },

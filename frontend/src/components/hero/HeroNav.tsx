@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import NavButton from "./NavButton";
 
 export default function HeroNav() {
   const navigate = useNavigate();
@@ -13,24 +12,21 @@ export default function HeroNav() {
 
       {/* Center nav links — hidden below lg */}
       <div className="hidden lg:flex gap-8">
-        <NavButton>Discover</NavButton>
-        <NavButton>Pricing</NavButton>
-        <NavButton>FAQs</NavButton>
+        <button
+          onClick={() => navigate("/events")}
+          className="bg-transparent border-none cursor-pointer font-sans text-[15px] font-semibold uppercase text-[#292929] tracking-[0.04em] transition-opacity hover:opacity-55"
+        >
+          Discover
+        </button>
       </div>
 
       {/* Right actions — col 3 */}
       <div className="flex items-center justify-end gap-6 lg:gap-8">
         <button
-          onClick={() => navigate("/events")}
+          onClick={() => navigate("/faqs")}
           className="hidden lg:block bg-transparent border-none cursor-pointer font-sans text-[15px] font-semibold uppercase text-[#292929] tracking-[0.04em] transition-opacity hover:opacity-55"
         >
-          Login
-        </button>
-        <button
-          onClick={() => navigate("/events")}
-          className="shrink-0 whitespace-nowrap bg-wandor-dark text-[#fafafa] border-none cursor-pointer font-sans text-[15px] font-medium uppercase tracking-[0.04em] px-5 py-3.5 rounded-full transition-all hover:bg-[#333] active:scale-95"
-        >
-          Plan My Trip
+          FAQs
         </button>
       </div>
     </nav>

@@ -77,3 +77,13 @@ class DataStack(Stack):
             partition_key=dynamodb.Attribute(name="attendeeEmail", type=dynamodb.AttributeType.STRING),
             sort_key=dynamodb.Attribute(name="registeredAt", type=dynamodb.AttributeType.STRING),
         )
+        # "My tickets": an authenticated attendee's own registrations.
+        # Populated only for registrations made through the authenticated
+        # POST /me/events/{eventId}/registrations route -- anonymous
+        # registrations have no userId attribute and simply never appear in
+        # this index (DynamoDB omits items missing the GSI's key attribute).
+        self.registrations_table.add_global_secondary_index(
+            index_name="UserIndex",
+            partition_key=dynamodb.Attribute(name="userId", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(name="registeredAt", type=dynamodb.AttributeType.STRING),
+        )

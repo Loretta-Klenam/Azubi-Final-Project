@@ -55,6 +55,13 @@ def test_registrations_table_gsis(stacks):
                         {"AttributeName": "registeredAt", "KeyType": "RANGE"},
                     ],
                 },
+                {
+                    "IndexName": "UserIndex",
+                    "KeySchema": [
+                        {"AttributeName": "userId", "KeyType": "HASH"},
+                        {"AttributeName": "registeredAt", "KeyType": "RANGE"},
+                    ],
+                },
             ],
         },
     )
