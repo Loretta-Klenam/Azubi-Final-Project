@@ -38,6 +38,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Lambda Layers are bundled for linux/arm64 (Graviton); the runner is
+      # amd64, so QEMU emulation is needed for that cross-arch docker build.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
